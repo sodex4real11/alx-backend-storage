@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 '''A module with tools for request caching and tracking.
 '''
@@ -7,11 +6,9 @@ import requests
 from functools import wraps
 from typing import Callable
 
-
 redis_store = redis.Redis()
 '''The module-level Redis instance.
 '''
-
 
 def count_requests(method: Callable) -> Callable:
     """A decorator function to count the number of requests made to a given URL
@@ -29,7 +26,6 @@ def count_requests(method: Callable) -> Callable:
         redis_store.setex(f'result:{url}', 10, result)
         return result
     return invoker
-
 
 @count_requests
 def get_page(url: str) -> str:
