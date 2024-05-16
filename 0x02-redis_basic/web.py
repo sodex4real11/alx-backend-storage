@@ -22,7 +22,7 @@ def wrap_requests(fn: Callable) -> Callable:
         if cached_response:
             return cached_response.decode('utf-8')
         result = fn(url)
-        redis_client.setex(f"cached:{url}", 10, result)
+        redis_client.setex(f"cached:{url}", 10, result.encode('utf-8'))
         return result
 
     return wrapper
