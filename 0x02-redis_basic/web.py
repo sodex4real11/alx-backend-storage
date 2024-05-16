@@ -1,31 +1,38 @@
 #!/usr/bin/env python3
-"""Web utilities"""
+""" Expiring web cache module """
 
 import redis
 import requests
+from typing import Callable
+from functools import wraps
 
 redis_client = redis.Redis()
 
+
+def wrap_requests(fn: Callable) -> Callable:
+    """ Decorator wrapper """
+
+    @wraps(fn)
+    def wrapper(url):
+        """ Wrapper for decorator """
+
+        redis_client.incr(f"count:{url}")
+        cached_response = redis_client.get(f"cached:{url}")
+
+        if cached_response:
+            return cached_response.decode('utf-8')
+        result = fn(url)
+        redis_client.setex(f"cached:{url}", 10, result)
+        return result
+
+    return wrapper
+
+
+@wrap_requests
 def get_page(url: str) -> str:
     """
-    Retrieve HTML content of the given URL.
-    
-    Args:
-        url (str): The URL to retrieve content from.
-    
-    Returns:
-        str: The HTML content of the URL.
+    Get page self descriptive
     """
-    redis_client.incr(f"count:{url}")
-    cached_response = redis_client.get(f"cached:{url}")
-
-    if cached_response:
-        return cached_response.decode('utf-8')
 
     response = requests.get(url)
-    if response.status_code == 200:
-        content = response.text
-        redis_client.setex(f"cached:{url}", 10, content.encode('utf-8'))
-        return content
-    else:
-        return f"Error: {response.status_code}"
+    return response.text
