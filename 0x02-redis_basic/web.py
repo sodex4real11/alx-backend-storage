@@ -1,34 +1,38 @@
 #!/usr/bin/env python3
-'''A module with tools for request caching and tracking.
-'''
+""" Expiring web cache module """
+
 import redis
 import requests
-from functools import wraps
 from typing import Callable
+from functools import wraps
 
-redis_store = redis.Redis()
-'''The module-level Redis instance.
-'''
+redis = redis.Redis()
 
-def count_requests(method: Callable) -> Callable:
-    """A decorator function to count the number of requests made to a given URL
-    and cache the response using Redis.
-    """
-    @wraps(method)
-    def invoker(url) -> str:
+
+def wrap_requests(fn: Callable) -> Callable:
+    """ Decorator wrapper """
+
+    @wraps(fn)
+    def wrapper(url):
         """ Wrapper for decorator """
-        redis_store.incr(f'count:{url}')
-        result = redis_store.get(f'result:{url}')
-        if result:
-            return result.decode('utf-8')
-        result = method(url)
-        redis_store.set(f'count:{url}', 0)
-        redis_store.setex(f'result:{url}', 10, result)
-        return result
-    return invoker
 
-@count_requests
+        redis.incr(f"count:{url}")
+        cached_response = redis.get(f"cached:{url}")
+
+        if cached_response:
+            return cached_response.decode('utf-8')
+        result = fn(url)
+        redis.setex(f"cached:{url}", 10, result)
+        return result
+
+    return wrapper
+
+
+@wrap_requests
 def get_page(url: str) -> str:
-    """Retrieve the content of a given URL using the requests library.
     """
-    return requests.get(url).text
+    Get page self descriptive
+    """
+
+    response = requests.get(url)
+    return response.text
