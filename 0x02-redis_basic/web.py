@@ -30,9 +30,7 @@ def wrap_requests(fn: Callable) -> Callable:
 
 @wrap_requests
 def get_page(url: str) -> str:
-    """
-    Get page self descriptive
-    """
+    """ Get page self descriptive """
 
     response = requests.get(url)
     return response.text
